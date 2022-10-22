@@ -61,11 +61,6 @@ fn get_url(value: Option<&str>) -> Result<String, Error> {
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let region_provider = RegionProviderChain::default_provider().or_else("ap-northeast-3");
 
-    // let region = bench("region provide", async {
-    //     region_provider.region().await.unwrap().as_ref().to_string()
-    // })
-    // .await;
-
     let shared_config = bench("load shared config from env", async {
         aws_config::from_env().region(region_provider).load().await
     })
@@ -80,9 +75,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
 
     let value = resp.secret_string();
 
-    println!("a");
     let url = get_url(value)?;
-    println!("b");
 
     let pool: sqlx::MySqlPool = bench(
         "establish connection",
@@ -91,31 +84,6 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
             .connect(&url),
     )
     .await?;
-
-    // let (event, _context) = event.into_parts();
-    // let body = event["body"].as_str();
-
-    // if let Some(body) = body {
-    //     let json: Value = serde_json::from_str(body).unwrap();
-    //     let id = json["id"].as_str();
-    //     let name = json["name"].as_str();
-
-    //     if let (Some(id), Some(name)) = (id, name) {
-    //         let mut transaction = pool.begin().await?;
-    //         let command = r#"CREATE TABLE IF NOT EXISTS users (id int, name varchar(64));"#;
-    //         sqlx::query(command).execute(&mut transaction).await?;
-    //         transaction.commit().await?;
-
-    //         let mut transaction = pool.begin().await?;
-    //         let command = r#"INSERT INTO users VALUES (?, ?);"#;
-    //         sqlx::query(command)
-    //             .bind(id)
-    //             .bind(name)
-    //             .execute(&mut transaction)
-    //             .await?;
-    //         transaction.commit().await?;
-    //     }
-    // }
 
     let query = r#"SELECT * FROM users;"#;
     let users: Vec<SqlxArticle> = bench("select all users", async {

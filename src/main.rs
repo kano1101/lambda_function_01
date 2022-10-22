@@ -13,9 +13,11 @@ fn test_func() -> Result<(), ()> {
         context,
     );
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let succeed_response = rt.block_on(async { func(lambda_event).await });
+    let succeed_response = rt
+        .block_on(async { func(lambda_event).await })
+        .map_err(|_| ())?;
     println!("{:?}", succeed_response);
-    assert_ne!(succeed_response.unwrap(), Value::Null);
+    assert_ne!(succeed_response, Value::Null);
     Ok(())
 }
 
@@ -84,6 +86,31 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
             .connect(&url),
     )
     .await?;
+
+    // let (event, _context) = event.into_parts();
+    // let body = event["body"].as_str();
+
+    // if let Some(body) = body {
+    //     let json: Value = serde_json::from_str(body).unwrap();
+    //     let id = json["id"].as_str();
+    //     let name = json["name"].as_str();
+
+    //     if let (Some(id), Some(name)) = (id, name) {
+    //         let mut transaction = pool.begin().await?;
+    //         let command = r#"CREATE TABLE IF NOT EXISTS users (id int, name varchar(64));"#;
+    //         sqlx::query(command).execute(&mut transaction).await?;
+    //         transaction.commit().await?;
+
+    //         let mut transaction = pool.begin().await?;
+    //         let command = r#"INSERT INTO users VALUES (?, ?);"#;
+    //         sqlx::query(command)
+    //             .bind(id)
+    //             .bind(name)
+    //             .execute(&mut transaction)
+    //             .await?;
+    //         transaction.commit().await?;
+    //     }
+    // }
 
     let query = r#"SELECT * FROM users;"#;
     let users: Vec<SqlxArticle> = bench("select all users", async {

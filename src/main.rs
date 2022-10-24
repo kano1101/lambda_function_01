@@ -1,7 +1,8 @@
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_secretsmanager::{output::GetSecretValueOutput, Client};
-use lambda_runtime::{service_fn, Context, Error, LambdaEvent};
+use lambda_runtime::{service_fn, Context, Error, LambdaEvent, Service};
 use serde_json::{json, Value};
+use std::sync::Arc;
 use tracing::info;
 use tracing_subscriber;
 
@@ -21,6 +22,45 @@ fn test_func() -> Result<(), ()> {
     Ok(())
 }
 
+async fn establish_connection_if_needs() -> Option<Box<sqlx::MySqlPool>> {
+    static mut POOL: Option<Box<sqlx::MySqlPool>> = None;
+    unsafe {
+        if POOL.is_none() {
+            let region_provider = RegionProviderChain::default_provider().or_else("ap-northeast-3");
+
+            let shared_config = bench("load shared config from env", async {
+                aws_config::from_env().region(region_provider).load().await
+            })
+            .await;
+            let client = bench("construct client", async { Client::new(&shared_config) }).await;
+
+            let get_secret_value = client.get_secret_value();
+            let secret_id = get_secret_value.secret_id("SecretsManager-02");
+
+            let sent = bench("send", async { secret_id.send().await }).await;
+            let resp = sent.unwrap_or(GetSecretValueOutput::builder().build());
+
+            let value = resp.secret_string();
+
+            let url = get_url(value).ok()?;
+
+            let pool: sqlx::MySqlPool = bench(
+                "establish connection",
+                sqlx::mysql::MySqlPoolOptions::new()
+                    .max_connections(5)
+                    .connect(&url),
+            )
+            .await
+            .ok()?;
+            POOL = Some(Box::new(pool));
+        }
+    }
+    return match unsafe { POOL.as_ref() } {
+        None => todo!(),
+        Some(pool) => Some(pool.clone()),
+    };
+}
+
 #[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
 struct SqlxArticle {
     pub id: i32,
@@ -30,8 +70,8 @@ struct SqlxArticle {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt::init();
-    let func = service_fn(func);
-    lambda_runtime::run(func).await?;
+
+    lambda_runtime::run(service_fn(func)).await?;
     Ok(())
 }
 
@@ -61,56 +101,32 @@ fn get_url(value: Option<&str>) -> Result<String, Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
-    let region_provider = RegionProviderChain::default_provider().or_else("ap-northeast-3");
+    let pool = *establish_connection_if_needs().await.unwrap();
 
-    let shared_config = bench("load shared config from env", async {
-        aws_config::from_env().region(region_provider).load().await
-    })
-    .await;
-    let client = bench("construct client", async { Client::new(&shared_config) }).await;
+    let (event, _context) = event.into_parts();
+    let body = event["body"].as_str();
 
-    let get_secret_value = client.get_secret_value();
-    let secret_id = get_secret_value.secret_id("SecretsManager-02");
+    if let Some(body) = body {
+        let json: Value = serde_json::from_str(body).unwrap();
+        let id = json["id"].as_str();
+        let name = json["name"].as_str();
 
-    let sent = bench("send", async { secret_id.send().await }).await;
-    let resp = sent.unwrap_or(GetSecretValueOutput::builder().build());
+        if let (Some(id), Some(name)) = (id, name) {
+            let mut transaction = pool.begin().await?;
+            let command = r#"CREATE TABLE IF NOT EXISTS users (id int, name varchar(64));"#;
+            sqlx::query(command).execute(&mut transaction).await?;
+            transaction.commit().await?;
 
-    let value = resp.secret_string();
-
-    let url = get_url(value)?;
-
-    let pool: sqlx::MySqlPool = bench(
-        "establish connection",
-        sqlx::mysql::MySqlPoolOptions::new()
-            .max_connections(5)
-            .connect(&url),
-    )
-    .await?;
-
-    // let (event, _context) = event.into_parts();
-    // let body = event["body"].as_str();
-
-    // if let Some(body) = body {
-    //     let json: Value = serde_json::from_str(body).unwrap();
-    //     let id = json["id"].as_str();
-    //     let name = json["name"].as_str();
-
-    //     if let (Some(id), Some(name)) = (id, name) {
-    //         let mut transaction = pool.begin().await?;
-    //         let command = r#"CREATE TABLE IF NOT EXISTS users (id int, name varchar(64));"#;
-    //         sqlx::query(command).execute(&mut transaction).await?;
-    //         transaction.commit().await?;
-
-    //         let mut transaction = pool.begin().await?;
-    //         let command = r#"INSERT INTO users VALUES (?, ?);"#;
-    //         sqlx::query(command)
-    //             .bind(id)
-    //             .bind(name)
-    //             .execute(&mut transaction)
-    //             .await?;
-    //         transaction.commit().await?;
-    //     }
-    // }
+            let mut transaction = pool.begin().await?;
+            let command = r#"INSERT INTO users VALUES (?, ?);"#;
+            sqlx::query(command)
+                .bind(id)
+                .bind(name)
+                .execute(&mut transaction)
+                .await?;
+            transaction.commit().await?;
+        }
+    }
 
     let query = r#"SELECT * FROM users;"#;
     let users: Vec<SqlxArticle> = bench("select all users", async {

@@ -1,10 +1,36 @@
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_secretsmanager::{output::GetSecretValueOutput, Client};
-use lambda_runtime::{service_fn, Context, Error, LambdaEvent, Service};
+use lambda_runtime::{service_fn, Context, Error, LambdaEvent};
 use serde_json::{json, Value};
-use std::sync::Arc;
 use tracing::info;
 use tracing_subscriber;
+
+use futures::future::FutureExt as _;
+
+async fn setup() {
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+}
+async fn teardown() {
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+}
+
+async fn run_test_async<F1, F2, F3, R>(setup_async: F1, test: F2, teardown_async: F3) -> R
+where
+    F1: std::future::Future,
+    F2: std::future::Future<Output = R>,
+    F3: std::future::Future,
+{
+    setup_async.await; // 予めやりたい処理
+    let result = std::panic::AssertUnwindSafe(test).catch_unwind().await;
+    teardown_async.await; // 後片付け処理
+
+    match result {
+        Err(err) => {
+            std::panic::resume_unwind(err);
+        }
+        Ok(ok) => return ok,
+    }
+}
 
 #[test]
 fn test_func() -> Result<(), ()> {
@@ -13,12 +39,14 @@ fn test_func() -> Result<(), ()> {
         serde_json::from_str(r#"{ "body": { "firstName": "Fumiya" } }"#).unwrap(),
         context,
     );
+
     let rt = tokio::runtime::Runtime::new().unwrap();
     let succeed_response = rt
-        .block_on(async { func(lambda_event).await })
+        .block_on(async { run_test_async(setup(), func(lambda_event), teardown()).await })
         .map_err(|_| ())?;
     println!("{:?}", succeed_response);
     assert_ne!(succeed_response, Value::Null);
+
     Ok(())
 }
 

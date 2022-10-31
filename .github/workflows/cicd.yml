@@ -31,13 +31,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Cargo Lambda Watch
+        run: |
+          cargo lambda watch &
       - name: Cross build with all features
         uses: actions-rs/cargo@v1
         with:
           use-cross: true 
           command: test
-          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
-
-
-- name: Rust AWS Lambda
-  uses: miere/action-rust-aws-lambda@1.52.0
+          args: --release --target x86_64-unknown-linux-musl --all-features --verbose -- --test-threads=1

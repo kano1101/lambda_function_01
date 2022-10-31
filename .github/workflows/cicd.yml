@@ -1,11 +1,12 @@
 name: CICD
 on:
   push:
-    branches:
-      - 'main'
-      - 'releases/**'
+#    branches:
+#      - 'main'
+#      - 'releases/**'
   pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
 
 jobs:
 #  build:
@@ -42,11 +43,15 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Cargo Lambda Watch
+      - name: Cargo lambda install
+        run: |
+          cargo install cargo-lambda
+
+      - name: Cargo lambda watch
         run: |
           cargo lambda watch &
 
-      - name: test
+      - name: Cross test
         uses: actions-rs/cargo@v1
         with:
           use-cross: true 

@@ -50,6 +50,7 @@ jobs:
       - name: Cargo lambda watch, invoke and cargo test
         run: |
           cargo lambda watch &
+          sleep 5
           cargo lambda invoke lambda_function_01 --data-ascii "{}"
           cargo test -- --test-threads=1
 

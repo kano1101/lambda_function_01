@@ -27,3 +27,11 @@ curl -L http://localhost:9000/lambda-url/lambda_function_01
 ```
 ps aux | grep "watch" | grep -v grep | awk '{ print "kill -9", $2 }' | sh
 ```
+
+## デプロイ用ビルド
+
+### 実行コマンド
+```
+cargo lambda build --output-format zip --release
+```
+上記コマンドを実行することで生成された`./target/lambda/lambda_function_01/bootstrap.zip`をAWS Lambdaにデプロイします。

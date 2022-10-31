@@ -43,9 +43,12 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Cargo lambda install
-        run: |
-          cargo install cargo-lambda
+#      - name: Cargo lambda install
+#        run: |
+#          cargo install cargo-lambda
+
+      - name: Setup Cargo Lambda
+        uses: zerj9/setup-cargo-lambda@v0.1.0
 
       - name: Cargo lambda watch, invoke and cargo test
         run: |

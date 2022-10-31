@@ -33,9 +33,22 @@ jobs:
 #    needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
       - name: Cargo Lambda Watch
         run: |
           cargo lambda watch &
-      - name: Test
-        run: |
-          cargo test --release --all-features --verbose
+
+      - name: test
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true 
+          command: test
+          args: --release --target x86_64-unknown-linux-musl --all-features --verbose

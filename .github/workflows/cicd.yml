@@ -37,8 +37,5 @@ jobs:
         run: |
           cargo lambda watch &
       - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true 
-          command: test
-          args: --release --all-features --verbose
+        run: |
+          cargo tests --release --all-features --verbose

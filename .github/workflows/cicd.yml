@@ -8,29 +8,29 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+#  build:
+#    name: Build
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v2
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+#      - name: Install stable toolchain
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#          override: true
 
-      - name: Cross build with all features
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true 
-          command: build
-          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
+#      - name: Cross build with all features
+#        uses: actions-rs/cargo@v1
+#        with:
+#          use-cross: true 
+#          command: build
+#          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
 
   ci:
     name: Continuous Integration
-    needs: build
+#    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Cargo Lambda Watch
@@ -38,4 +38,4 @@ jobs:
           cargo lambda watch &
       - name: Test
         run: |
-          cargo tests --release --all-features --verbose
+          cargo test --release --all-features --verbose

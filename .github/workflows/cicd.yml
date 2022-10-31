@@ -43,8 +43,9 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Rust AWS Lambda
-        uses: miere/action-rust-aws-lambda@1.52.0
+      - name: Cargo lambda install
+        run: |
+          cargo install cargo-lambda
 
       - name: Cargo lambda watch
         run: |

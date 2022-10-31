@@ -9,29 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-#  build:
-#    name: Build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v2
-
-#      - name: Install stable toolchain
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
-
-#      - name: Cross build with all features
-#        uses: actions-rs/cargo@v1
-#        with:
-#          use-cross: true 
-#          command: build
-#          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
-
-  ci:
-    name: Continuous Integration
-#    needs: build
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -43,27 +22,43 @@ jobs:
           toolchain: stable
           override: true
 
-#      - name: Cargo lambda install
-#        run: |
-#          cargo install cargo-lambda
+#      - name: Cross build with all features
+#        uses: actions-rs/cargo@v1
+#        with:
+#          use-cross: true 
+#          command: build
+#          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
 
       - name: Setup Cargo Lambda
         uses: zerj9/setup-cargo-lambda@v0.1.0
 
-      - name: Install cargo watch
+      - name: Cargo lambda build
         run: |
-          cargo install cargo-watch
+          cargo lambda build --output-format zip --release
 
-      - name: Cargo lambda watch, invoke and cargo test
-        run: |
-          cargo lambda watch &
-          sleep 5
-          cargo lambda invoke lambda_function_01 --data-ascii "{}"
-          cargo test -- --test-threads=1
+#  ci:
+#    name: Continuous Integration
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v2
 
-#      - name: Cross test
-#        uses: actions-rs/cargo@v1
+#      - name: Install stable toolchain
+#        uses: actions-rs/toolchain@v1
 #        with:
-#          use-cross: true 
-#          command: test
-#          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
+#          toolchain: stable
+#          override: true
+
+#      - name: Setup Cargo Lambda
+#        uses: zerj9/setup-cargo-lambda@v0.1.0
+
+#      - name: Install cargo watch
+#        run: |
+#          cargo install cargo-watch
+
+#      - name: Cargo lambda watch, invoke and cargo test
+#        run: |
+#          cargo lambda watch &
+#          sleep 5
+#          cargo lambda invoke lambda_function_01 --data-ascii "{}"
+#          cargo test -- --test-threads=1

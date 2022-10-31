@@ -22,22 +22,22 @@ jobs:
           toolchain: stable
           override: true
 
-#      - name: Cross build with all features
-#        uses: actions-rs/cargo@v1
-#        with:
-#          use-cross: true 
-#          command: build
-#          args: --release --target x86_64-unknown-linux-musl --all-features --verbose
+      - name: Cross build with all features
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true 
+          command: build
+          args: --release --all-features --verbose
 
-      - name: Setup Cargo Lambda
-        uses: zerj9/setup-cargo-lambda@v0.1.0
+#      - name: Setup Cargo Lambda
+#        uses: zerj9/setup-cargo-lambda@v0.1.0
 
-      - name: Setup Zig
-        uses: goto-bus-stop/setup-zig@v1.3.0
+#      - name: Setup Zig
+#        uses: goto-bus-stop/setup-zig@v1.3.0
 
-      - name: Cargo lambda build
-        run: |
-          cargo lambda build --output-format zip --release
+#      - name: Cargo lambda build
+#        run: |
+#          cargo lambda build --output-format zip --release
 
 #  ci:
 #    name: Continuous Integration

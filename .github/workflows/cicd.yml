@@ -32,6 +32,9 @@ jobs:
       - name: Setup Cargo Lambda
         uses: zerj9/setup-cargo-lambda@v0.1.0
 
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v1.3.0
+
       - name: Cargo lambda build
         run: |
           cargo lambda build --output-format zip --release

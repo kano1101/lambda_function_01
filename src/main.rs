@@ -1,145 +1,116 @@
-use aws_config::meta::region::RegionProviderChain;
-use aws_sdk_secretsmanager::{output::GetSecretValueOutput, Client};
-use lambda_runtime::{service_fn, Context, Error, LambdaEvent, Service};
-use serde_json::{json, Value};
-use std::sync::Arc;
-use tracing::info;
-use tracing_subscriber;
+use lambda_dev::{bench, establish_connection_or_get_cache};
+use lambda_http::{run, service_fn, Body, Request, Response};
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
-#[test]
-fn test_func() -> Result<(), ()> {
-    let context = Context::default();
-    let lambda_event = LambdaEvent::<Value>::new(
-        serde_json::from_str(r#"{ "body": { "firstName": "Fumiya" } }"#).unwrap(),
-        context,
+use sqlx::Acquire as _;
+
+#[tokio::test]
+async fn test_system_get() -> anyhow::Result<()> {
+    let test: String = reqwest::get("http://localhost:9000/lambda-url/lambda_function_01")
+        .await?
+        .text()
+        .await?;
+
+    let v: Vec<SqlxArticle> = serde_json::from_str(&test)?;
+
+    assert_eq!(
+        v,
+        vec![SqlxArticle {
+            id: 1,
+            name: "Saki".to_string(),
+        }]
     );
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let succeed_response = rt
-        .block_on(async { func(lambda_event).await })
-        .map_err(|_| ())?;
-    println!("{:?}", succeed_response);
-    assert_ne!(succeed_response, Value::Null);
+
+    Ok(())
+}
+#[tokio::test]
+async fn test_unit_func() -> anyhow::Result<()> {
+    async fn db_setup(tx: &mut sqlx::Transaction<'_, sqlx::MySql>) -> anyhow::Result<()> {
+        let (id, name) = (42, "Fumiya");
+        let command = r#"INSERT INTO users VALUES (?, ?);"#;
+        sqlx::query(command).bind(id).bind(name).execute(tx).await?;
+        Ok(())
+    }
+    async fn db_teardown(tx: &mut sqlx::Transaction<'_, sqlx::MySql>) -> anyhow::Result<()> {
+        let command = r#"DELETE FROM users WHERE name="Fumiya";"#;
+        sqlx::query(command).execute(tx).await?;
+        Ok(())
+    }
+
+    let event = Request::default();
+
+    let pool = establish_connection_or_get_cache()
+        .await
+        .ok_or(core::fmt::Error)?;
+    let mut tx = pool.begin().await?;
+    let mut tx = tx.begin().await?;
+    db_setup(&mut tx).await?;
+    let mut tx = tx.begin().await?;
+    let succeed_response = func(&mut tx, event).await?;
+    let mut tx = tx.begin().await?;
+    db_teardown(&mut tx).await?;
+    tx.commit().await?;
+
+    let v: Vec<SqlxArticle> = match succeed_response.into_body() {
+        Body::Text(t) => serde_json::from_str(&t)?,
+        _ => todo!(),
+    };
+
+    assert_eq!(
+        v,
+        vec![
+            SqlxArticle {
+                id: 1,
+                name: "Saki".to_string(),
+            },
+            SqlxArticle {
+                id: 42,
+                name: "Fumiya".to_string(),
+            }
+        ]
+    );
+
     Ok(())
 }
 
-async fn establish_connection_if_needs() -> Option<Box<sqlx::MySqlPool>> {
-    static mut POOL: Option<Box<sqlx::MySqlPool>> = None;
-    unsafe {
-        if POOL.is_none() {
-            let region_provider = RegionProviderChain::default_provider().or_else("ap-northeast-3");
-
-            let shared_config = bench("load shared config from env", async {
-                aws_config::from_env().region(region_provider).load().await
-            })
-            .await;
-            let client = bench("construct client", async { Client::new(&shared_config) }).await;
-
-            let get_secret_value = client.get_secret_value();
-            let secret_id = get_secret_value.secret_id("SecretsManager-02");
-
-            let sent = bench("send", async { secret_id.send().await }).await;
-            let resp = sent.unwrap_or(GetSecretValueOutput::builder().build());
-
-            let value = resp.secret_string();
-
-            let url = get_url(value).ok()?;
-
-            let pool: sqlx::MySqlPool = bench(
-                "establish connection",
-                sqlx::mysql::MySqlPoolOptions::new()
-                    .max_connections(5)
-                    .connect(&url),
-            )
-            .await
-            .ok()?;
-            POOL = Some(Box::new(pool));
-        }
-    }
-    return match unsafe { POOL.as_ref() } {
-        None => todo!(),
-        Some(pool) => Some(pool.clone()),
-    };
-}
-
-#[derive(Debug, Clone, PartialEq, sqlx::FromRow)]
+#[serde_as]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, sqlx::FromRow)]
 struct SqlxArticle {
     pub id: i32,
     pub name: String,
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    lambda_runtime::run(service_fn(func)).await?;
+    let pool = establish_connection_or_get_cache()
+        .await
+        .ok_or(core::fmt::Error)?;
+
+    run(service_fn(|event| async move {
+        let mut tx = pool.begin().await.unwrap();
+        func(&mut tx, event).await
+    }))
+    .await
+    .map_err(|_| core::fmt::Error)?;
+
     Ok(())
 }
 
-async fn bench<T>(name: &str, f: impl std::future::Future<Output = T>) -> T {
-    let now = std::time::Instant::now();
-    let r = f.await;
-    let duration_time = format!("{:?}", now.elapsed());
-    info!(duration_time, name);
-    r
-}
-
-fn get_url(value: Option<&str>) -> Result<String, Error> {
-    let secret_info: Value = if let Some(value) = value {
-        serde_json::from_str(value)?
-    } else {
-        Value::Null
-    };
-
-    let host: &str = &secret_info["host_proxy"].as_str().unwrap_or("localhost");
-    let username: &str = &secret_info["username"].as_str().unwrap_or("root");
-    let password: &str = &secret_info["password"].as_str().unwrap_or("password");
-    let database: &str = &secret_info["dbname"].as_str().unwrap_or("test_db");
-
-    let url = format!("mysql://{}:{}@{}/{}", username, password, host, database);
-
-    Ok(url)
-}
-
-async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
-    let pool = *establish_connection_if_needs().await.unwrap();
-
-    let (event, _context) = event.into_parts();
-    let body = event["body"].as_str();
-
-    if let Some(body) = body {
-        let json: Value = serde_json::from_str(body).unwrap();
-        let id = json["id"].as_str();
-        let name = json["name"].as_str();
-
-        if let (Some(id), Some(name)) = (id, name) {
-            let mut transaction = pool.begin().await?;
-            let command = r#"CREATE TABLE IF NOT EXISTS users (id int, name varchar(64));"#;
-            sqlx::query(command).execute(&mut transaction).await?;
-            transaction.commit().await?;
-
-            let mut transaction = pool.begin().await?;
-            let command = r#"INSERT INTO users VALUES (?, ?);"#;
-            sqlx::query(command)
-                .bind(id)
-                .bind(name)
-                .execute(&mut transaction)
-                .await?;
-            transaction.commit().await?;
-        }
-    }
-
+async fn func<'a>(
+    tx: &mut sqlx::Transaction<'a, sqlx::MySql>,
+    _event: Request,
+) -> anyhow::Result<Response<Body>> {
     let query = r#"SELECT * FROM users;"#;
-    let users: Vec<SqlxArticle> = bench("select all users", async {
-        sqlx::query_as::<_, SqlxArticle>(query)
-            .fetch_all(&pool)
-            .await
-            .unwrap()
-    })
-    .await;
+    let users = sqlx::query_as::<_, SqlxArticle>(query).fetch_all(tx);
+    let users: Vec<SqlxArticle> = bench("select all users", users).await?;
 
-    Ok(json!({
-        "statusCode": 200,
-        "headers": { "content-type": "application/json" },
-        "body": format!("{:?}", users),
-    }))
+    let resp = Response::builder()
+        .status(200)
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(&users)?.into())
+        .map_err(Box::new)?;
+    Ok(resp)
 }

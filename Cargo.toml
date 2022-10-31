@@ -17,6 +17,6 @@ sqlx = { version = "0.6.2", features = ["runtime-tokio-rustls", "mysql"] }
 tokio = { version = "1.21.2", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
-reqwest = "0.11.12"
+reqwest = { version = "0.11.12", default-features = false }
 lambda_dev = { git = "https://github.com/kano1101/lambda_dev.git" }
 anyhow = "1.0.66"

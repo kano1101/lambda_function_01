@@ -40,7 +40,9 @@ async fn test_unit_func() -> anyhow::Result<()> {
 
     let event = Request::default();
 
-    let pool = establish_connection_or_get_cache().await;
+    let pool = establish_connection_or_get_cache()
+        .await
+        .ok_or(core::fmt::Error)?;
     let mut tx = pool.begin().await?;
     let mut tx = tx.begin().await?;
     db_setup(&mut tx).await?;
@@ -83,7 +85,9 @@ struct SqlxArticle {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let pool = establish_connection_or_get_cache().await;
+    let pool = establish_connection_or_get_cache()
+        .await
+        .ok_or(core::fmt::Error)?;
 
     run(service_fn(|event| async move {
         let mut tx = pool.begin().await.unwrap();

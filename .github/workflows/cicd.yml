@@ -47,9 +47,10 @@ jobs:
         run: |
           cargo install cargo-lambda
 
-      - name: Cargo lambda watch
+      - name: Cargo lambda watch, invoke and cargo test
         run: |
           cargo lambda watch &
+          cargo lambda invoke lambda_function_01 --data-ascii "{}"
           cargo test -- --test-threads=1
 
 #      - name: Cross test

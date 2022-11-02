@@ -39,29 +39,37 @@ jobs:
 #        run: |
 #          cargo lambda build --output-format zip --release
 
-#  ci:
-#    name: Continuous Integration
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v2
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-#      - name: Install stable toolchain
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
 
-#      - name: Setup Cargo Lambda
-#        uses: zerj9/setup-cargo-lambda@v0.1.0
+      - name: Install sqlx-cli
+        run: |
+          cargo install sqlx-cli
 
-#      - name: Install cargo watch
-#        run: |
-#          cargo install cargo-watch
+      - name: Migrate
+        run: |
+          sqlx migrate run
 
-#      - name: Cargo lambda watch, invoke and cargo test
-#        run: |
-#          cargo lambda watch &
-#          sleep 5
-#          cargo lambda invoke lambda_function_01 --data-ascii "{}"
-#          cargo test -- --test-threads=1
+      - name: Setup Cargo Lambda
+        uses: zerj9/setup-cargo-lambda@v0.1.0
+
+      - name: Install cargo watch
+        run: |
+          cargo install cargo-watch
+
+      - name: Cargo lambda watch, invoke and cargo test
+        run: |
+          cargo lambda watch &
+          sleep 5
+          cargo lambda invoke lambda_function_01 --data-ascii "{}"
+          cargo test -- --test-threads=1

@@ -45,6 +45,7 @@ jobs:
 
       - name: Display current directory
         run: |
+          echo "DATABASE_URL=mysql://root:password@localhost/test_db" >> .env
           pwd
           ls -al
 
@@ -60,9 +61,6 @@ jobs:
 
       - name: Database setup
         run: |
-          pwd
-          ls -al
-          echo "DATABASE_URL=mysql://root:password@localhost/test_db" >> .env
           sqlx database create
 
       - name: Database migrate

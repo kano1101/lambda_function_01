@@ -60,7 +60,7 @@ cargo test -- --test-threads=1
 
 ### バックグラウンドに起動したLambdaを終了
 ```
-ps aux | grep "watch" | grep -v grep | awk '{ print "kill -9", $2 }' | sh
+ps aux | grep "watch" | grep -v grep | awk '{ print "kill -9", $2 }' | sudo sh
 ```
 
 ## デプロイ用ビルド

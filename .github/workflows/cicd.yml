@@ -1,43 +1,40 @@
 name: CICD
 on:
-#  push:
-#    branches:
-#      - 'main'
-#      - 'releases/**'
   pull_request:
-    types: [opened, synchronize]
+    branches:
+      - 'main'
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v2
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+  #     - name: Install stable toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
 
-      - name: Cross build with all features
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true 
-          command: build
-          args: --release --all-features --verbose
+  #     - name: Cross build with all features
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         use-cross: true 
+  #         command: build
+  #         args: --release --all-features --verbose
 
-#      - name: Setup Cargo Lambda
-#        uses: zerj9/setup-cargo-lambda@v0.1.0
+  #    # - name: Setup Cargo Lambda
+  #    #   uses: zerj9/setup-cargo-lambda@v0.1.0
 
-#      - name: Setup Zig
-#        uses: goto-bus-stop/setup-zig@v1.3.0
+  #    # - name: Setup Zig
+  #    #   uses: goto-bus-stop/setup-zig@v1.3.0
 
-#      - name: Cargo lambda build
-#        run: |
-#          cargo lambda build --output-format zip --release
+  #    # - name: Cargo lambda build
+  #    #   run: |
+  #    #     cargo lambda build --output-format zip --release
 
   ci:
     name: Continuous Integration
@@ -56,7 +53,12 @@ jobs:
         run: |
           cargo install sqlx-cli
 
-      - name: Migrate
+      - name: Database setup
+        run: |
+          echo "DATABASE_URL=mysql://root:password@localhost/test_db" >> .env
+          sqlx database create
+
+      - name: Database migrate
         run: |
           sqlx migrate run
 
@@ -70,6 +72,11 @@ jobs:
       - name: Cargo lambda watch, invoke and cargo test
         run: |
           cargo lambda watch &
-          sleep 5
+          sleep 1
+          curl -L http://localhost:9000/lambda-url/lambda_function_01
           cargo lambda invoke lambda_function_01 --data-ascii "{}"
           cargo test -- --test-threads=1
+
+      - name: Clean up some process
+        run: |
+          ps aux | grep "watch" | grep -v grep | awk '{ print "kill -9", $2 }' | sudo sh

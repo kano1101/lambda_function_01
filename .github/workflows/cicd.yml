@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Display current directory
         run: |
           echo "カレントディレクトリ"
           echo ${pwd}
@@ -51,21 +53,13 @@ jobs:
         with:
           toolchain: stable
           override: true
-        run: |
-          echo "カレントディレクトリ"
-          echo ${pwd}
 
       - name: Install sqlx-cli
         run: |
           cargo install sqlx-cli
-        run: |
-          echo "カレントディレクトリ"
-          echo ${pwd}
 
       - name: Database setup
         run: |
-          echo "カレントディレクトリ"
-          echo ${pwd}
           echo "DATABASE_URL=mysql://root:password@localhost/test_db" >> .env
           sqlx database create
 

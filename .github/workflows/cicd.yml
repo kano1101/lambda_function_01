@@ -48,6 +48,7 @@ jobs:
           echo "DATABASE_URL=mysql://root:password@localhost/test_db" >> .env
           pwd
           ls -al
+          cat .env
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

@@ -46,7 +46,7 @@ jobs:
       - name: Display current directory
         run: |
           echo "カレントディレクトリ"
-          echo ${pwd}
+          echo $(pwd)
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

@@ -45,99 +45,30 @@ jobs:
         ports:
           - 3306:3306
         env:
-          MYSQL_ROOT_PASSWORD: root_password
-          MYSQL_DATABASE: foo
-          MYSQL_USER: user1
-          MYSQL_PASSWORD: user1_password
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DATABASE_ROOT_PASSWORD }}
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: ${{ secrets.DATABASE_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         options: >-
           --health-cmd "mysqladmin ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     steps:
-      - name: Show Docker containers
-        run: docker ps -a
-      - name: Show databases for root user
-        run: mysql --protocol=tcp -h localhost -P 3306 -u root -proot_password -e "SHOW DATABASES"
-      - name: Show databases for user1
-        run: mysql --protocol=tcp -h localhost -P 3306 -u user1 -puser1_password -e "SHOW DATABASES"
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Display current directory
-        run: |
-          mysqld --version
-          echo "DATABASE_URL=mysql://root:${{ secrets.DATABASE_PASSWORD }}@127.0.0.1:3306/test_db" >> .env
-          pwd
-          ls -al
-          cat .env
-          echo "${{secrets.DATABASE_PASSWORD}}"
+      - name: Set DATABASE_URL to dotenv
+        run: echo "DATABASE_URL=mysql://${{ secrets.DATABASE_USERNAME }}:${{ secrets.DATABASE_PASSWORD }}@127.0.0.1:3306/test_db" >> .env
 
-      # - name: MySQL start
-      #   run: sudo service mysql start
+      - name: Show Docker containers
+        run: docker ps -a
 
-      # - name: For safe mode mysql
-      #   run: |
-      #     sudo service mysql stop
-      #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-      #     sudo service mysql start
+      - name: MySQL alive check with ping
+        run: mysqladmin ping --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }}
 
-      # ここから
-      # - name: MySQL server install
-      #   run: |
-      #     sudo apt update
-      #     sudo apt install mysql-server
-
-      - name: For safe mode mysql
-        run: |
-          # sudo systemctl stop mysqld
-          # sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-          # sudo systemctl start mysqld
-          sudo service mysql stop
-          sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-          sudo service mysql start
-      # ここまで
-
-      - name: Display MySQL mysql.user
-        if: always()
-        run: sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
-      - name: Display MySQL mysql.user
-        if: failure()
-        run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
-      - name: Display MySQL mysql.user with DATABASE_EMPTY_PASSWORD
-        if: failure()
-        run: sudo mysql -uroot -p"" -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
-      - name: Display MySQL mysql.user
-        if: failure()
-        run: sudo mysql -uroot -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
-      - name: Display MySQL mysql.user
-        if: failure()
-        run: sudo mysql -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
-      - name: Clear
-        if: failure()
-        run: echo "truth message"
-
-      # - name: MySQL sock file exists check
-      #   run: |
-      #     sudo mkdir -p /var/run/mysqld/
-      #     sudo touch /var/run/mysqld/mysqld.sock
-
-      - name: MySQL alive check with ping on NO_DATABASE_PASSWORD
-        if: always()
-        run: mysqladmin ping -uroot -h127.0.0.1 -P3306
-      - name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
-        if: failure()
-        run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_ROOT_PASSWORD }}
-      - name: MySQL alive check with ping on DATABASE_EMPTY_PASSWORD
-        if: failure()
-        run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p""
-      - name: MySQL alive check with ping on DATABASE_PASSWORD
-        if: failure()
-        run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_PASSWORD }}
-      - name: MySQL alive check with ping on DATABASE_PASSWORD
-        if: failure()
-        run: mysqladmin ping -h127.0.0.1 -P3306
+      - name: Display mysql.user
+        run: mysql --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }} -e "SELECT user, host FROM mysql.user"
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -146,23 +77,19 @@ jobs:
           override: true
 
       - name: Install sqlx-cli
-        run: |
-          cargo install sqlx-cli
+        run: cargo install sqlx-cli
 
       - name: Database setup
-        run: |
-          sqlx database create
+        run: sqlx database create
 
       - name: Database migrate
-        run: |
-          sqlx migrate run
+        run: sqlx migrate run
 
       - name: Setup Cargo Lambda
         uses: zerj9/setup-cargo-lambda@v0.1.0
 
       - name: Install cargo watch
-        run: |
-          cargo install cargo-watch
+        run: cargo install cargo-watch
 
       - name: Cargo lambda watch, invoke and cargo test
         run: |
@@ -173,5 +100,4 @@ jobs:
           cargo test -- --test-threads=1
 
       - name: Clean up some process
-        run: |
-          ps aux | grep "watch" | grep -v grep | awk '{ print "kill -9", $2 }' | sudo sh
+        run: ps aux | grep "watch" | grep -v grep | awk '{ print "kill -9", $2 }' | sudo sh

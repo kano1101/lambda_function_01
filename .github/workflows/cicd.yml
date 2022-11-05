@@ -52,10 +52,23 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      - name: Shutdown Ubuntu MySQL (SUDO)
+      # - name: Shutdown Ubuntu MySQL (SUDO)
+      #   run: |
+      #     sudo systemctl restart mysql
+      #     sudo systemctl stop mysql
+
+      # 1を試しているため不要
+      # - name: Display MySQL mysql.user
+      #   run: |
+      #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
+      #     sudo systemctl start mysql
+      #     sudo systemctl status mysql
+      #     sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
+
+      # 1
+      - name: MySQL起動
         run: |
-          sudo systemctl restart mysql
-          sudo systemctl stop mysql
+          sudo service mysqld start
 
       # No such file or directoryが出るためコメントアウト
       # - name: Display MySQL initial password
@@ -70,8 +83,10 @@ jobs:
       - name: MySQL alive check with ping
         run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
       - if: failure()
+        name: A
         run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
-      - if: failure()
+      - name: B
+        if: failure()
         run: mysqladmin ping -uroot
       - if: failure()
         run: sudo mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
@@ -79,13 +94,6 @@ jobs:
         run: sudo mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
       - if: failure()
         run: sudo mysqladmin ping -uroot
-
-      - name: Display MySQL mysql.user
-        run: |
-          sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-          sudo systemctl start mysql
-          sudo systemctl status mysql
-          sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
 
       # ファイルが存在しないためコメントアウト
       # - name: MySQL sock file exists check

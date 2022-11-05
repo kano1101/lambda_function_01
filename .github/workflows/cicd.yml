@@ -52,8 +52,16 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
+      - name: MySQL ping
+        run: |
+          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+
       - name: Shutdown Ubuntu MySQL (SUDO)
         run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
+
+      - name: MySQL ping
+        run: |
+          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Set up MySQL
         uses: mirromutth/mysql-action@v1.1
@@ -64,6 +72,10 @@ jobs:
           mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }}
           mysql user: 'root'
           mysql password: ${{ secrets.DATABASE_PASSWORD }}
+
+      - name: MySQL ping
+        run: |
+          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

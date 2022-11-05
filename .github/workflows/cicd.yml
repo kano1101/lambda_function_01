@@ -52,7 +52,7 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      - name: MySQL起動
+      - name: MySQL start
         run: |
           sudo service mysql start
 
@@ -67,10 +67,13 @@ jobs:
         run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e="SELECT user, host FROM mysql.user"
       - name: Display MySQL mysql.user
         if: failure()
+        run: sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
+      - name: Display MySQL mysql.user
+        if: failure()
         run: sudo mysql -e="SELECT user, host FROM mysql.user"
       - name: Clear
         if: failure()
-        run: echo "truth message
+        run: echo "truth message"
 
       # - name: MySQL sock file exists check
       #   run: |

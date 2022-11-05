@@ -57,13 +57,9 @@ jobs:
           sudo apt update
           sudo apt install mysql-server
 
-      - name: MySQL alive check with ping
+      - name: MySQL up
         run: |
-          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
-
-      # - name: MySQL up
-      #   run: |
-      #     sudo service mysqld start
+          sudo service mysqld start
 
       - name: MySQL sock file exists check
         run: |
@@ -73,26 +69,22 @@ jobs:
         run: |
           mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
-      - name: Shutdown Ubuntu MySQL (SUDO)
-        run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
+      # - name: Shutdown Ubuntu MySQL (SUDO)
+      #   run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
 
-      - name: MySQL ping
-        run: |
-          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      # - name: Set up MySQL
+      #   uses: mirromutth/mysql-action@v1.1
+      #   with:
+      #     host port: 9000
+      #     container port: 3306
+      #     mysql database: 'test_db'
+      #     mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }}
+      #     mysql user: 'root'
+      #     mysql password: ${{ secrets.DATABASE_PASSWORD }}
 
-      - name: Set up MySQL
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          host port: 9000
-          container port: 3306
-          mysql database: 'test_db'
-          mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }}
-          mysql user: 'root'
-          mysql password: ${{ secrets.DATABASE_PASSWORD }}
-
-      - name: MySQL ping
-        run: |
-          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      # - name: MySQL ping
+      #   run: |
+      #     mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

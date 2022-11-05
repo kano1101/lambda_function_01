@@ -68,7 +68,8 @@ jobs:
         run: mysqladmin ping --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Display mysql.user
-        run: mysql --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }} -e "SELECT user, host FROM mysql.user"
+        # run: mysql --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }} -e "SELECT user, host FROM mysql.user"
+        run: mysql --protocol=tcp -h127.0.0.1 -P3306 -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e "SELECT user, host FROM mysql.user"
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

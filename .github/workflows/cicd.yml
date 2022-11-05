@@ -55,11 +55,17 @@ jobs:
       # - name: MySQL start
       #   run: sudo service mysql start
 
+      # - name: For safe mode mysql
+      #   run: |
+      #     sudo service mysql stop
+      #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
+      #     sudo service mysql start
+
       - name: For safe mode mysql
         run: |
-          sudo service mysql stop
+          sudo systemctl stop mysqld
           sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-          sudo service mysql start
+          sudo systemctl start mysqld
 
       - name: Display MySQL mysql.user
         if: always()
@@ -91,6 +97,9 @@ jobs:
       - name: MySQL alive check with ping on DATABASE_PASSWORD
         if: failure()
         run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_PASSWORD }}
+      - name: MySQL alive check with ping on DATABASE_PASSWORD
+        if: failure()
+        run: mysqladmin ping -h127.0.0.1 -P3306
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

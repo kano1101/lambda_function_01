@@ -65,6 +65,11 @@ jobs:
       #     sudo systemctl status mysql
       #     sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
 
+      - name: MySQL server install
+        run: |
+          sudo apt update
+          sudo apt install mysql-server
+
       # 1
       - name: MySQL起動
         run: |

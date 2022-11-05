@@ -52,14 +52,18 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      - name: MySQL server install
-        run: |
-          sudo apt update
-          sudo apt install mysql-server
+      # - name: MySQL server install
+      #   run: |
+      #     sudo apt update
+      #     sudo apt install mysql-server
 
       - name: MySQL up
         run: |
           sudo systemctl start mysql
+
+      - name: Display MySQL initial password
+        run: |
+          cat /var/log/mysqld.log | grep password
 
       # - name: MySQL sock file exists check
       #   run: |

@@ -54,22 +54,16 @@ jobs:
 
       - name: Shutdown Ubuntu MySQL (SUDO)
         run: |
+          sudo systemctl restart mysql
           sudo systemctl stop mysql
 
-      # - name: MySQL server install
-      #   run: |
-      #     sudo apt update
-      #     sudo apt install mysql-server
+      - name: Display MySQL initial password
+        run: |
+          cat /var/log/mysqld.log | sudo grep password
 
-      # - name: Set up MySQL
-      #   uses: mirromutth/mysql-action@v1.1
-      #   with:
-      #     host port: 9000
-      #     container port: 3306
-      #     mysql database: 'test_db'
-      #     mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }}
-      #     mysql user: 'root'
-      #     mysql password: ${{ secrets.DATABASE_PASSWORD }}
+      - name: MySQL sock file exists check
+        run: |
+          touch /var/run/mysqld/mysqld.sock
 
       # - name: MySQL pass off
       #   run: |
@@ -79,17 +73,17 @@ jobs:
         run: |
           sudo mysqld_safe –skip-grant-tables &
 
-      - name: MySQL up
-        run: |
-          sudo systemctl start mysql
+      # - name: MySQL up
+      #   run: |
+      #     sudo systemctl start mysql
 
       - name: Display MySQL users info
         run: |
-          sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+          sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
 
-      # - name: MySQL sock file exists check
-      #   run: |
-      #     test -f /var/run/mysqld/mysqld.sock
+      - name: MySQL sock file exists check
+        run: |
+          test -f /var/run/mysqld/mysqld.sock
 
       - name: MySQL alive check with ping
         run: |

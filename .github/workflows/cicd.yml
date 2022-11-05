@@ -75,13 +75,13 @@ jobs:
       #   run: |
       #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
 
-      # - name: MySQL up
-      #   run: |
-      #     sudo systemctl start mysql
-
       - name: Safe mode MySQL
         run: |
           sudo mysqld_safe –skip-grant-tables &
+
+      - name: MySQL up
+        run: |
+          sudo systemctl start mysql
 
       - name: Display MySQL users info
         run: |

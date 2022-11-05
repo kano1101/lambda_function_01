@@ -54,6 +54,7 @@ jobs:
 
       - name: MySQL ping
         run: |
+          test -f /var/run/mysqld/mysqld.sock
           mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Shutdown Ubuntu MySQL (SUDO)

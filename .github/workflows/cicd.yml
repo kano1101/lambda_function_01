@@ -55,7 +55,7 @@ jobs:
       - name: MySQL server install
         run: |
           sudo apt update
-          apt install mysql-server
+          sudo apt install mysql-server
 
       - name: MySQL up
         run: |

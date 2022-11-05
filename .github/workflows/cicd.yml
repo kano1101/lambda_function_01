@@ -61,9 +61,9 @@ jobs:
         run: |
           sudo systemctl start mysql
 
-      - name: MySQL sock file exists check
-        run: |
-          test -f /var/run/mysqld/mysqld.sock
+      # - name: MySQL sock file exists check
+      #   run: |
+      #     test -f /var/run/mysqld/mysqld.sock
 
       - name: MySQL alive check with ping
         run: |

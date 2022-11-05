@@ -52,16 +52,18 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      - name: MySQL start
+      # - name: MySQL start
+      #   run: sudo service mysql start
+
+      - name: For safe mode mysql
         run: |
+          sudo service mysql stop
+          sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
           sudo service mysql start
 
       - name: Display MySQL mysql.user
-        run: |
-          # sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-          # sudo service mysql start
-          # sudo service mysql status
-          sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+        if: always()
+        run: sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
       - name: Display MySQL mysql.user
         if: failure()
         run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e="SELECT user, host FROM mysql.user"
@@ -81,12 +83,13 @@ jobs:
       #     sudo touch /var/run/mysqld/mysqld.sock
 
       - name: MySQL alive check with ping on NO_DATABASE_PASSWORD
+        if: always()
         run: mysqladmin ping -uroot
-      - if: failure()
-        name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
+      - name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
+        if: failure()
         run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
-      - if: failure()
-        name: MySQL alive check with ping on DATABASE_PASSWORD
+      - name: MySQL alive check with ping on DATABASE_PASSWORD
+        if: failure()
         run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Install stable toolchain

@@ -64,7 +64,8 @@ jobs:
 
       - name: MySQL sock file exists check
         run: |
-          touch /var/run/mysqld/mysqld.sock
+          sudo mkdir -p /var/run/mysqld/
+          sudo touch /var/run/mysqld/mysqld.sock
 
       # 1を試しているのでコメントアウト
       # - name: MySQL pass off

@@ -37,7 +37,7 @@ cd ~/development/rust/marble/lambda_test/lambda_function_01/
 ※下記コマンド中の`password`は好きに変更して良い
 ```
 export PASSWORD=password
-echo "DATABASE_URL=mysql://root:${PASSWORD}@localhost/test_db" >> .env
+echo "DATABASE_URL=mysql://root:${PASSWORD}@localhost:3306/test_db" >> .env
 sqlx database create
 ```
 

@@ -83,6 +83,9 @@ jobs:
       - name: Display MySQL mysql.user
         if: failure()
         run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
+      - name: Display MySQL mysql.user with DATABASE_EMPTY_PASSWORD
+        if: failure()
+        run: sudo mysql -uroot -p"" -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
       - name: Display MySQL mysql.user
         if: failure()
         run: sudo mysql -uroot -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
@@ -104,6 +107,9 @@ jobs:
       - name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
         if: failure()
         run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_ROOT_PASSWORD }}
+      - name: MySQL alive check with ping on DATABASE_EMPTY_PASSWORD
+        if: failure()
+        run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p""
       - name: MySQL alive check with ping on DATABASE_PASSWORD
         if: failure()
         run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_PASSWORD }}

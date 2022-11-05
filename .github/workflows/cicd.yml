@@ -52,10 +52,24 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      # - name: MySQL server install
-      #   run: |
-      #     sudo apt update
-      #     sudo apt install mysql-server
+      - name: Shutdown Ubuntu MySQL (SUDO)
+        run: |
+          sudo sytemctl stop mysql
+
+      - name: MySQL server install
+        run: |
+          sudo apt update
+          sudo apt install mysql-server
+
+      # - name: Set up MySQL
+      #   uses: mirromutth/mysql-action@v1.1
+      #   with:
+      #     host port: 9000
+      #     container port: 3306
+      #     mysql database: 'test_db'
+      #     mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }}
+      #     mysql user: 'root'
+      #     mysql password: ${{ secrets.DATABASE_PASSWORD }}
 
       - name: MySQL up
         run: |
@@ -72,19 +86,6 @@ jobs:
       - name: Display MySQL initial password
         run: |
           cat /var/log/mysqld.log | grep password
-
-      # - name: Shutdown Ubuntu MySQL (SUDO)
-      #   run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
-
-      # - name: Set up MySQL
-      #   uses: mirromutth/mysql-action@v1.1
-      #   with:
-      #     host port: 9000
-      #     container port: 3306
-      #     mysql database: 'test_db'
-      #     mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }}
-      #     mysql user: 'root'
-      #     mysql password: ${{ secrets.DATABASE_PASSWORD }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

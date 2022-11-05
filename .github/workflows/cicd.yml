@@ -62,6 +62,15 @@ jobs:
           # sudo service mysql start
           # sudo service mysql status
           sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+      - name: Display MySQL mysql.user
+        if: failure()
+        run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+      - name: Display MySQL mysql.user
+        if: failure()
+        run: sudo mysql -e="SELECT user, host FROM mysql.user"
+      - name: Clear
+        if: failure()
+        run: echo "truth message
 
       # - name: MySQL sock file exists check
       #   run: |

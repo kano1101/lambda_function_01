@@ -52,6 +52,10 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
+      - name: MySQL起動
+        run: |
+          sudo service mysql start
+
       - name: Display MySQL mysql.user
         run: |
           # sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
@@ -59,23 +63,19 @@ jobs:
           # sudo service mysql status
           sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
 
-      - name: MySQL起動
-        run: |
-          sudo service mysql start
-
       # - name: MySQL sock file exists check
       #   run: |
       #     sudo mkdir -p /var/run/mysqld/
       #     sudo touch /var/run/mysqld/mysqld.sock
 
-      - name: MySQL alive check with ping on DATABASE_PASSWORD
-        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      - name: MySQL alive check with ping on NO_DATABASE_PASSWORD
+        run: mysqladmin ping -uroot
       - if: failure()
         name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
         run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
       - if: failure()
-        name: MySQL alive check with ping on NO_DATABASE_PASSWORD
-        run: mysqladmin ping -uroot
+        name: MySQL alive check with ping on DATABASE_PASSWORD
+        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

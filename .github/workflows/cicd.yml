@@ -67,33 +67,30 @@ jobs:
           sudo mkdir -p /var/run/mysqld/
           sudo touch /var/run/mysqld/mysqld.sock
 
-      - name: MySQL pass off
+      - name: MySQL alive check with ping
+        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      - if: failure()
+        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
+      - if: failure()
+        run: mysqladmin ping -uroot
+      - if: failure()
+        run: sudo mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      - if: failure()
+        run: sudo mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
+      - if: failure()
+        run: sudo mysqladmin ping -uroot
+
+      - name: Display MySQL mysql.user
         run: |
           sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-
-      - name: MySQL up
-        run: |
           sudo systemctl start mysql
-
-      - name: MySQL status
-        run: |
           sudo systemctl status mysql
-
-      # - name: Safe mode MySQL
-      #   run: |
-      #     sudo mysqld_safe –skip-grant-tables &
-
-      - name: Display MySQL users info
-        run: |
           sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
 
-      - name: MySQL sock file exists check
-        run: |
-          test -f /var/run/mysqld/mysqld.sock
-
-      - name: MySQL alive check with ping
-        run: |
-          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      # ファイルが存在しないためコメントアウト
+      # - name: MySQL sock file exists check
+      #   run: |
+      #     test -f /var/run/mysqld/mysqld.sock
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

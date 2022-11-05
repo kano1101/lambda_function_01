@@ -46,64 +46,36 @@ jobs:
       - name: Display current directory
         run: |
           mysqld --version
-          echo "DATABASE_URL=mysql://root:${{secrets.DATABASE_PASSWORD}}@127.0.0.1/test_db" >> .env
+          echo "DATABASE_URL=mysql://root:${{ secrets.DATABASE_PASSWORD }}@127.0.0.1/test_db" >> .env
           pwd
           ls -al
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      # - name: Shutdown Ubuntu MySQL (SUDO)
-      #   run: |
-      #     sudo systemctl restart mysql
-      #     sudo systemctl stop mysql
+      - name: Display MySQL mysql.user
+        run: |
+          # sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
+          # sudo service mysql start
+          # sudo service mysql status
+          sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
 
-      # 1を試しているため不要
-      # - name: Display MySQL mysql.user
-      #   run: |
-      #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-      #     sudo systemctl start mysql
-      #     sudo systemctl status mysql
-      #     sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
-
-      # - name: MySQL server install
-      #   run: |
-      #     sudo apt update
-      #     sudo apt install mysql-server
-
-      # 1
       - name: MySQL起動
         run: |
           sudo service mysql start
 
-      # No such file or directoryが出るためコメントアウト
-      # - name: Display MySQL initial password
-      #   run: |
-      #     cat /var/log/mysqld.log | sudo grep password
-
-      - name: MySQL sock file exists check
-        run: |
-          sudo mkdir -p /var/run/mysqld/
-          sudo touch /var/run/mysqld/mysqld.sock
-
-      - name: MySQL alive check with ping
-        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
-      - if: failure()
-        name: A
-        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
-      - name: B
-        if: failure()
-        run: mysqladmin ping -uroot
-      - if: failure()
-        run: sudo mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
-      - if: failure()
-        run: sudo mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
-      - if: failure()
-        run: sudo mysqladmin ping -uroot
-
-      # ファイルが存在しないためコメントアウト
       # - name: MySQL sock file exists check
       #   run: |
-      #     test -f /var/run/mysqld/mysqld.sock
+      #     sudo mkdir -p /var/run/mysqld/
+      #     sudo touch /var/run/mysqld/mysqld.sock
+
+      - name: MySQL alive check with ping on DATABASE_PASSWORD
+        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+      - if: failure()
+        name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
+        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
+      - if: failure()
+        name: MySQL alive check with ping on NO_DATABASE_PASSWORD
+        run: mysqladmin ping -uroot
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

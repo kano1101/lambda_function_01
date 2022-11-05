@@ -61,11 +61,18 @@ jobs:
       #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
       #     sudo service mysql start
 
+      # ここから
+      - name: MySQL server install
+        run: |
+          sudo apt update
+          sudo apt install mysql-server
+
       - name: For safe mode mysql
         run: |
           sudo systemctl stop mysqld
           sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
           sudo systemctl start mysqld
+      # ここまで
 
       - name: Display MySQL mysql.user
         if: always()

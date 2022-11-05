@@ -57,26 +57,31 @@ jobs:
           sudo systemctl restart mysql
           sudo systemctl stop mysql
 
-      - name: Display MySQL initial password
-        run: |
-          cat /var/log/mysqld.log | sudo grep password
+      # No such file or directoryが出るためコメントアウト
+      # - name: Display MySQL initial password
+      #   run: |
+      #     cat /var/log/mysqld.log | sudo grep password
 
       - name: MySQL sock file exists check
         run: |
           touch /var/run/mysqld/mysqld.sock
 
+      # 1を試しているのでコメントアウト
       # - name: MySQL pass off
       #   run: |
       #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
 
+      # 1
       - name: Safe mode MySQL
         run: |
           sudo mysqld_safe –skip-grant-tables &
 
+      # 2を試しているのでコメントアウト
       # - name: MySQL up
       #   run: |
       #     sudo systemctl start mysql
 
+      # 2
       - name: Display MySQL users info
         run: |
           sudo mysql -uroot -e="SELECT user, host FROM mysql.user"

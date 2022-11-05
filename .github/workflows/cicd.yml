@@ -54,7 +54,7 @@ jobs:
 
       - name: Shutdown Ubuntu MySQL (SUDO)
         run: |
-          sudo sytemctl stop mysql
+          sudo systemctl stop mysql
 
       - name: MySQL server install
         run: |

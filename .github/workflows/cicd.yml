@@ -46,17 +46,24 @@ jobs:
       - name: Display current directory
         run: |
           mysqld --version
-          echo "DATABASE_URL=mysql://root:password@127.0.0.1:3306/test_db" >> .env
+          echo "DATABASE_URL=mysql://root:${{secrets.DATABASE_PASSWORD}}@127.0.0.1/test_db" >> .env
           pwd
           ls -al
           cat .env
+          echo "${{secrets.DATABASE_PASSWORD}}"
 
-      # - name: Shutdown Ubuntu MySQL (SUDO)
-      #   run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
+      - name: Shutdown Ubuntu MySQL (SUDO)
+        run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
 
-      # - name: Set up MySQL
-      #   uses: mirromutth/mysql-action@v1.1
-      #   with:
+      - name: Set up MySQL
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          host port: 9000 # Optional, default value is 3306. The port of host
+          container port: 3306 # Optional, default value is 3306. The port of container
+          mysql database: 'test_db'
+          mysql root password: ${{ secrets.DATABASE_ROOT_PASSWORD }} # Required if "mysql user" is empty, default is empty. The root superuser password
+          mysql user: 'root'
+          mysql password: ${{ secrets.DATABASE_PASSWORD }} # Required if "mysql user" exists. The password for the "mysql user"
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -70,7 +77,7 @@ jobs:
 
       - name: Database setup
         run: |
-          sudo sqlx database create
+          sqlx database create
 
       - name: Database migrate
         run: |

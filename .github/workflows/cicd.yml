@@ -46,7 +46,7 @@ jobs:
       - name: Display current directory
         run: |
           mysqld --version
-          echo "DATABASE_URL=mysql://root:${{ secrets.DATABASE_PASSWORD }}@127.0.0.1/test_db" >> .env
+          echo "DATABASE_URL=mysql://root:${{ secrets.DATABASE_PASSWORD }}@127.0.0.1:3306/test_db" >> .env
           pwd
           ls -al
           cat .env
@@ -63,16 +63,16 @@ jobs:
 
       - name: Display MySQL mysql.user
         if: always()
-        run: sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+        run: sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
       - name: Display MySQL mysql.user
         if: failure()
-        run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+        run: sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
       - name: Display MySQL mysql.user
         if: failure()
-        run: sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
+        run: sudo mysql -uroot -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
       - name: Display MySQL mysql.user
         if: failure()
-        run: sudo mysql -e="SELECT user, host FROM mysql.user"
+        run: sudo mysql -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
       - name: Clear
         if: failure()
         run: echo "truth message"
@@ -84,13 +84,13 @@ jobs:
 
       - name: MySQL alive check with ping on NO_DATABASE_PASSWORD
         if: always()
-        run: mysqladmin ping -uroot
+        run: mysqladmin ping -uroot -h127.0.0.1 -P3306
       - name: MySQL alive check with ping on DATABASE_ROOT_PASSWORD
         if: failure()
-        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }}
+        run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_ROOT_PASSWORD }}
       - name: MySQL alive check with ping on DATABASE_PASSWORD
         if: failure()
-        run: mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+        run: mysqladmin ping -uroot -h127.0.0.1 -P3306 -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

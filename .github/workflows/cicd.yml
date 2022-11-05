@@ -54,12 +54,12 @@ jobs:
 
       - name: MySQL server install
         run: |
-          sudo apt update
-          sudo apt install mysql-server
+          apt update
+          apt install mysql-server
 
       - name: MySQL up
         run: |
-          sudo service mysqld start
+          service mysqld start
 
       - name: MySQL sock file exists check
         run: |

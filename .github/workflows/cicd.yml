@@ -67,22 +67,22 @@ jobs:
           sudo mkdir -p /var/run/mysqld/
           sudo touch /var/run/mysqld/mysqld.sock
 
-      # 1を試しているのでコメントアウト
-      # - name: MySQL pass off
-      #   run: |
-      #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-
-      # 1
-      - name: Safe mode MySQL
+      - name: MySQL pass off
         run: |
-          sudo mysqld_safe –skip-grant-tables &
+          sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
 
-      # 2を試しているのでコメントアウト
-      # - name: MySQL up
+      - name: MySQL up
+        run: |
+          sudo systemctl start mysql
+
+      - name: MySQL status
+        run: |
+          sudo systemctl status mysql
+
+      # - name: Safe mode MySQL
       #   run: |
-      #     sudo systemctl start mysql
+      #     sudo mysqld_safe –skip-grant-tables &
 
-      # 2
       - name: Display MySQL users info
         run: |
           sudo mysql -uroot -e="SELECT user, host FROM mysql.user"

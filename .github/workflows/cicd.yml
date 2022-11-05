@@ -57,6 +57,10 @@ jobs:
           sudo apt update
           sudo apt install mysql-server
 
+      - name: MySQL alive check with ping
+        run: |
+          mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
+
       # - name: MySQL up
       #   run: |
       #     sudo service mysqld start

@@ -71,17 +71,21 @@ jobs:
       #     mysql user: 'root'
       #     mysql password: ${{ secrets.DATABASE_PASSWORD }}
 
-      - name: MySQL pass off
-        run: |
-          sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
+      # - name: MySQL pass off
+      #   run: |
+      #     sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
 
       - name: MySQL up
         run: |
           sudo systemctl start mysql
 
+      # - name: Safe mode MySQL
+      #   run: |
+      #   sudo mysqld_safe –skip-grant-tables &
+
       - name: Display MySQL users info
         run: |
-          mysql -uroot -h127.0.0.1 -P3306 -e="SELECT user, host FROM mysql.user"
+          sudo mysql -uroot -e="SELECT user, host FROM mysql.user"
 
       # - name: MySQL sock file exists check
       #   run: |

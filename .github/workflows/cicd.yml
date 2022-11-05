@@ -52,9 +52,12 @@ jobs:
           cat .env
           echo "${{secrets.DATABASE_PASSWORD}}"
 
-      - name: MySQL ping
+      - name: MySQL sock file exists check
         run: |
           test -f /var/run/mysqld/mysqld.sock
+
+      - name: MySQL alive check with ping
+        run: |
           mysqladmin ping -uroot -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Shutdown Ubuntu MySQL (SUDO)

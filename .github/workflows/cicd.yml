@@ -85,7 +85,7 @@ jobs:
 
       - name: Display MySQL users info
         run: |
-          sudo mysql -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e="SELECT user, host FROM mysql.user"
+          sudo mysql -uroot -p${{ secrets.DATABASE_PASSWORD }} -e="SELECT user, host FROM mysql.user"
 
       # - name: MySQL sock file exists check
       #   run: |

@@ -59,7 +59,7 @@ jobs:
 
       - name: MySQL up
         run: |
-          service mysqld start
+          sudo service mysqld start
 
       - name: MySQL sock file exists check
         run: |

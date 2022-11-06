@@ -68,7 +68,6 @@ jobs:
         run: mysqladmin ping --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }}
 
       - name: Display mysql.user
-        # run: mysql --protocol=tcp -h127.0.0.1 -P3306 -u${{ secrets.DATABASE_USERNAME }} -p${{ secrets.DATABASE_PASSWORD }} -e "SELECT user, host FROM mysql.user"
         run: mysql --protocol=tcp -h127.0.0.1 -P3306 -uroot -p${{ secrets.DATABASE_ROOT_PASSWORD }} -e "SELECT user, host FROM mysql.user"
 
       - name: Install stable toolchain
@@ -82,16 +81,16 @@ jobs:
         with:
           crate: sqlx-cli
 
-      - name: Install cargo-watch
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-watch
-
       - name: Database setup
         run: sqlx database create
 
       - name: Database migrate
         run: sqlx migrate run
+
+      - name: Install cargo-watch
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-watch
 
       - name: Setup Cargo Lambda
         uses: zerj9/setup-cargo-lambda@v0.1.0

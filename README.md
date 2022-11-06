@@ -17,20 +17,21 @@ cargo 1.65.0 (4bc8f24d3 2022-10-20)
 ### 環境の構築(構築は一度完了すれば二度はしなくて良い)
 ```
 cargo install sqlx-cli
+cargo install cargo-watch
 cargo install cargo-lambda
 ```
 
 ### git clone 手順(多くの場合一度クローンすれば二度しなくて良い)
 ```
 cd ~
-mkdir -p development/rust/marble/lambda_test/
-cd development/rust/marble/lambda_test/
+mkdir -p development/rust/marble/
+cd development/rust/marble/
 git clone git@github.com:kano1101/lambda_function_01.git
 ```
 
 ### プロジェクトディレクトリに移動
 ```
-cd ~/development/rust/marble/lambda_test/lambda_function_01/
+cd ~/development/rust/marble/lambda_function_01/
 ```
 
 ### データベースのセットアップ(一度セットアップすれば二度は行わなくて良い)

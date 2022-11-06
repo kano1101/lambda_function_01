@@ -80,9 +80,12 @@ jobs:
       - name: Install sqlx-cli
         uses: baptiste0928/cargo-install@v1
         with:
-          crate:
-            sqlx-cli
-            cargo-watch
+          crate: sqlx-cli
+
+      - name: Install cargo-watch
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-watch
 
       - name: Database setup
         run: sqlx database create

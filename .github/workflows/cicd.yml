@@ -87,10 +87,10 @@ jobs:
       - name: Database migrate
         run: sqlx migrate run
 
-      # - name: Install cargo-watch
-      #   uses: baptiste0928/cargo-install@v1
-      #   with:
-      #     crate: cargo-watch
+      - name: Install cargo-watch
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-watch
 
       - name: Setup Cargo Lambda
         uses: zerj9/setup-cargo-lambda@v0.1.0
@@ -98,7 +98,7 @@ jobs:
       - name: Cargo lambda watch, invoke and cargo test
         run: |
           cargo lambda watch &
-          sleep 10
+          sleep 1
           curl -L http://localhost:9000/lambda-url/lambda_function_01
           cargo lambda invoke lambda_function_01 --data-ascii "{}"
           cargo test -- --test-threads=1

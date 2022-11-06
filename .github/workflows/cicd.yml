@@ -78,7 +78,14 @@ jobs:
           override: true
 
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: sqlx-cli
+
+      - name: Install cargo-watch
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-watch
 
       - name: Database setup
         run: sqlx database create
@@ -88,9 +95,6 @@ jobs:
 
       - name: Setup Cargo Lambda
         uses: zerj9/setup-cargo-lambda@v0.1.0
-
-      - name: Install cargo watch
-        run: cargo install cargo-watch
 
       - name: Cargo lambda watch, invoke and cargo test
         run: |

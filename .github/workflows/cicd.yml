@@ -78,7 +78,9 @@ jobs:
           override: true
 
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: sqlx-cli
 
       - name: Database setup
         run: sqlx database create

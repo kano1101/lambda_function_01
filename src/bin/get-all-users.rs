@@ -36,8 +36,8 @@ async fn func<'a>(
 ) -> anyhow::Result<Response<Body>> {
     let query = r#"SELECT * FROM users;"#;
 
-    let users = sqlx::query_as::<_, User>(query).fetch_all(tx);
-    let users: Vec<User> = bench("select all users", users).await?;
+    let it_will_be_users = sqlx::query_as::<_, User>(query).fetch_all(tx);
+    let users: Vec<User> = bench("select all users", it_will_be_users).await?;
 
     let resp = Response::builder()
         .status(200)
@@ -70,7 +70,7 @@ async fn test_system_get() -> anyhow::Result<()> {
     test_db_setup(&mut tx).await?;
     tx.commit().await?;
 
-    let users: String = reqwest::get("http://localhost:9000/lambda-url/lambda_function_01")
+    let users: String = reqwest::get("http://localhost:9000/lambda-url/get-all-users")
         .await?
         .text()
         .await?;

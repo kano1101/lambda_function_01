@@ -99,8 +99,8 @@ jobs:
         run: |
           cargo lambda watch &
           sleep 1
-          curl -L http://localhost:9000/lambda-url/lambda_function_01
-          cargo lambda invoke lambda_function_01 --data-ascii "{}"
+          curl -L http://localhost:9000/lambda-url/get-all-users
+          # cargo lambda invoke lambda_function_01 --data-ascii "{}"
           cargo test -- --test-threads=1
 
       - name: Clean up some process

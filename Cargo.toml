@@ -3,7 +3,9 @@ name = "lambda_function_01"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "get-all-users"
+path = "./src/bin/get-all-users.rs"
 
 [dependencies]
 async-trait = "0.1.58"
@@ -20,3 +22,5 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["f
 reqwest = { version = "0.11.12", default-features = false }
 lambda_dev = { git = "https://github.com/kano1101/lambda_dev.git" }
 anyhow = "1.0.66"
+http = "0.2.8"
+# dotenv = "0.15.0"

@@ -35,7 +35,7 @@ cd ~/development/rust/marble/lambda_function_01/
 ```
 
 ### データベースのセットアップ(一度セットアップすれば二度は行わなくて良い)
-※下記コマンド中の`password`は好きに変更して良い
+※下記コマンド中の`password`は任意のものに設定すること
 ```
 export PASSWORD=password
 echo "DATABASE_URL=mysql://root:${PASSWORD}@localhost:3306/test_db" >> .env
@@ -54,8 +54,6 @@ cargo lambda watch &
 
 ### テストの実行
 ```
-curl -L http://localhost:9000/lambda-url/lambda_function_01
-cargo lambda invoke lambda_function_01 --data-ascii "{}"
 cargo test -- --test-threads=1
 ```
 

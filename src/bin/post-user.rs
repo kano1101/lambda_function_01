@@ -1,14 +1,9 @@
-use async_trait::async_trait;
 use lambda_dev::establish_connection_or_get_cache;
 use lambda_http::{run, service_fn, Body, Request, Response};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-#[serde_as]
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, sqlx::FromRow)]
-struct NewUser {
-    pub name: String,
-}
+use async_trait::async_trait;
 
 #[serde_as]
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, sqlx::FromRow)]
@@ -107,7 +102,7 @@ impl IUserRepository for UserRepository {
         executor: impl MySqlAcquire<'_> + 'async_trait,
     ) -> anyhow::Result<()> {
         let mut conn = executor.acquire().await?;
-        sqlx::query!("INSERT INTO users (id, name) VALUES (42, ?)", name)
+        sqlx::query!("INSERT INTO users (id, name) VALUES (42, ?)", name) // TODO: 42
             .execute(&mut *conn)
             .await?;
         Ok(())
@@ -171,8 +166,9 @@ impl IUserService for MySqlPool {
 
 #[cfg(test)]
 mod tests {
-    use super::{func, IUserRepository, IUserService, UserRepository};
+    use super::{func, IUserService};
     use async_trait::async_trait;
+    use lambda_dev::establish_connection_or_get_cache;
     use lambda_http::{Body, Request};
     #[async_trait]
     trait UserServiceForTest: IUserService {
@@ -183,15 +179,7 @@ mod tests {
     #[async_trait]
     impl UserServiceForTest for sqlx::mysql::MySqlPool {
         async fn setup(&self) -> anyhow::Result<()> {
-            let repo = UserRepository;
-            let mut tx = self.begin().await?;
-            // トランザクションでUserRepoの関数を実行できる
-            let success_or_not = repo.clear_users(&mut tx).await;
-            if success_or_not.is_err() {
-                tx.rollback().await?;
-                anyhow::bail!("データのクリアに失敗しました。")
-            }
-            tx.commit().await?;
+            self.clear_users().await?;
             Ok(())
         }
         async fn teardown(&self) -> anyhow::Result<()> {
@@ -199,35 +187,28 @@ mod tests {
         }
     }
 
-    // #[tokio::test]
-    // async fn test_system_post() -> anyhow::Result<()> {
-    //     let pool = establish_connection_or_get_cache().await.ok_or(Box::new)?;
+    #[tokio::test]
+    async fn test_system_post() -> anyhow::Result<()> {
+        let pool = establish_connection_or_get_cache()
+            .await
+            .ok_or(core::fmt::Error)?;
 
-    //     let mut tx = pool.begin().await?;
-    //     test_db_setup(&mut tx).await?;
-    //     tx.commit().await?;
+        assert!(pool.setup().await.is_ok());
 
-    //     let users: String = reqwest::get("http://localhost:9000/lambda-url/lambda_function_01")
-    //         .await?
-    //         .text()
-    //         .await?;
+        assert!(pool.find_user("Bob").await.is_err());
+        let client = reqwest::Client::new();
+        client
+            .post("http://localhost:9000/lambda-url/post-user")
+            .body("Bob")
+            .send()
+            .await?;
+        assert!(pool.find_user("Bob").await.is_ok());
 
-    //     let mut tx = pool.begin().await?;
-    //     test_db_teardown(&mut tx).await?;
-    //     tx.commit().await?;
+        assert!(pool.teardown().await.is_ok());
+        assert!(pool.find_user("Bob").await.is_err());
 
-    //     let v: Vec<User> = serde_json::from_str(&users)?;
-
-    //     assert_eq!(
-    //         v,
-    //         vec![User {
-    //             id: 42,
-    //             name: "Akira".to_string(),
-    //         }]
-    //     );
-
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     #[tokio::test]
     async fn test_unit_add_func() -> anyhow::Result<()> {
@@ -243,7 +224,7 @@ mod tests {
         assert!(pool.find_user("Bob").await.is_err());
         assert_eq!(
             func(pool, &event).await.unwrap().body(),
-            &Body::Text(r#"{"id":42,"name":"Bob"}"#.into())
+            &Body::Text(r#"{"id":42,"name":"Bob"}"#.into()) // TODO: 42
         );
         assert!(pool.find_user("Bob").await.is_ok());
         assert!(func(pool, &event).await.is_err());

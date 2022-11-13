@@ -215,10 +215,9 @@ mod tests {
         let mut event = Request::default();
         *event.body_mut() = Body::Text("Bob".to_string());
 
-        let pool = &sqlx::mysql::MySqlPoolOptions::new()
-            .max_connections(5)
-            .connect("mysql://root:password@localhost/test_db")
-            .await?;
+        let pool = establish_connection_or_get_cache()
+            .await
+            .ok_or(core::fmt::Error)?;
 
         assert!(pool.setup().await.is_ok());
         assert!(pool.find_user("Bob").await.is_err());

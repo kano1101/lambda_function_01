@@ -227,10 +227,10 @@ mod tests {
     async fn test_unit_all_func() -> anyhow::Result<()> {
         let event = Request::default();
 
-        let pool = &sqlx::mysql::MySqlPoolOptions::new()
-            .max_connections(5)
-            .connect("mysql://root:password@localhost/test_db")
-            .await?;
+        let pool = establish_connection_or_get_cache()
+            .await
+            .ok_or(core::fmt::Error)?;
+
         assert!(pool.setup().await.is_ok());
         assert_eq!(
             func(pool, &event).await.unwrap().body(),

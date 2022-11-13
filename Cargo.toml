@@ -23,3 +23,4 @@ reqwest = { version = "0.11.12", default-features = false }
 lambda_dev = { git = "https://github.com/kano1101/lambda_dev.git" }
 anyhow = "1.0.66"
 http = "0.2.8"
+# dotenv = "0.15.0"
